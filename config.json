@@ -1,5 +1,5 @@
 {
-  "bot_token": "8554290801:AAFVe0JJbFrw45ah9UgNabOuOLpU8kXgdE8",
+  "bot_token": "",
   "payment_gateway": "zarinpal",
   "zarinpal_merchant_id": "",
   "idpay_api_key": "",
