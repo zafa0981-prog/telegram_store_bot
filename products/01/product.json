@@ -1,0 +1,18 @@
+{
+  "id": "01",
+  "title": "کاور اینستاگرام حرفه‌ای – سری 01",
+  "description": "مجموعه کاورهای اینستاگرام سری 01 شامل 4 طرح PNG کامل شده + 4 طرح خام در نسخه اقتصادی و همچنین فایل‌های CDR, AI, PDF در نسخه طلایی.",
+  "cover_image": "A 01.jpg",
+  "plans": {
+    "economic": {
+      "name": "نسخه اقتصادی",
+      "price": 49000,
+      "download_link": "https://drive.google.com/uc?export=download&id=1zf6ypV4248BRl_i0PTIM_bQDLiVWbyyc"
+    },
+    "golden": {
+      "name": "نسخه طلایی",
+      "price": 89000,
+      "download_link": "https://drive.google.com/uc?export=download&id=1Pz1jGWsODN9bT9IkpP6cQpJESapJ5oBf"
+    }
+  }
+}
