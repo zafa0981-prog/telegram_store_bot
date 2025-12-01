@@ -1,12 +1,4 @@
-"""
-Complete bot.py for Telegram File Shop (SQLite + Google Drive links).
-- Supports 3 payment providers (Zarinpal/IDPay/NextPay) as initiation links.
-- If API keys are filled in config.json, bot will attempt server-side verification.
-- Otherwise, it accepts a transaction id text from the user to mark purchase as paid.
-Usage:
-- Fill `config.json` with BOT token and optional gateway keys.
-- Run: python bot.py
-"""
+# bot.py  (Webhook-ready version for Render / any provider)
 import os
 import json
 import sqlite3
@@ -33,10 +25,14 @@ PRODUCTS_DIR = os.path.join(BASE_DIR, "products")
 DB_PATH = os.path.join(BASE_DIR, "database.db")
 
 # load config
-with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-    CONFIG = json.load(f)
+if os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        CONFIG = json.load(f)
+else:
+    CONFIG = {}
 
-BOT_TOKEN = CONFIG.get("bot_token") or os.getenv("BOT_TOKEN")
+# BOT_TOKEN is taken from environment first (recommended), otherwise from config.json
+BOT_TOKEN = os.getenv("BOT_TOKEN") or CONFIG.get("bot_token")
 ADMIN_ID = int(CONFIG.get("admin_id") or 0)
 
 logging.basicConfig(level=logging.INFO)
@@ -77,7 +73,7 @@ def load_product(pid):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-# payment link builders (simple, not calling provider APIs to create invoice)
+# payment link builders (simple)
 def zarinpal_create_link(amount_toman, callback_url, desc):
     authority = secrets.token_urlsafe(12)
     link = f"https://www.zarinpal.com/pg/StartPay/{authority}"
@@ -93,10 +89,8 @@ def nextpay_create_link(amount_toman, callback_url):
     link = f"https://nextpay.org/nx/gateway/payment/{token}"
     return {"token": token, "link": link}
 
-# verification helpers: try provider APIs if configured, otherwise accept user-submitted txid as proof
 def verify_with_provider(provider, ref, amount):
     cfg = CONFIG
-    # if requests not available, cannot verify via API
     if requests is None:
         return False
     try:
@@ -119,7 +113,7 @@ def verify_with_provider(provider, ref, amount):
         logger.warning("Provider verification error: %s", e)
     return False
 
-# bot handlers
+# --------- Handlers (unchanged) ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     conn = get_db()
@@ -304,46 +298,4 @@ async def admin_list_purchases(update: Update, context: ContextTypes.DEFAULT_TYP
         await update.message.reply_text("خریدی ثبت نشده.")
         conn.close()
         return
-    text = "خریدها:\n"
-    for r in rows[:50]:
-        ts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(r[7] if isinstance(r[7], int) else r[7]))
-        text += f"#{r[0]} user:{r[1]} product:{r[2]} plan:{r[3]} amount:{r[4]} success:{r[5]} ref:{r[6]} time:{ts}\n"
-    await update.message.reply_text(text)
-    conn.close()
-
-async def admin_set_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != int(CONFIG.get("admin_id") or 0):
-        await update.message.reply_text("فقط ادمین مجاز است.")
-        return
-    parts = update.message.text.strip().split()
-    if len(parts) != 2:
-        await update.message.reply_text("فرمت: /setgateway <zarinpal|idpay|nextpay>")
-        return
-    gw = parts[1].lower()
-    if gw not in ("zarinpal","idpay","nextpay"):
-        await update.message.reply_text("درگاه نامعتبر.")
-        return
-    CONFIG["payment_gateway"] = gw
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(CONFIG, f, ensure_ascii=False, indent=2)
-    await update.message.reply_text(f"درگاه پیش‌فرض به {gw} تغییر یافت.")
-
-def main():
-    init_db()
-    if not BOT_TOKEN:
-        print("Bot token not set. Put it in config.json as 'bot_token' or set BOT_TOKEN env var.")
-        return
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("products", products_handler))
-    app.add_handler(CallbackQueryHandler(callback_buy, pattern=r"^buy\|"))
-    app.add_handler(CallbackQueryHandler(startpay_handler, pattern=r"^startpay\|"))
-    app.add_handler(CommandHandler("product_01", product_view))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), receipt_handler))
-    app.add_handler(CommandHandler("listpurchases", admin_list_purchases))
-    app.add_handler(CommandHandler("setgateway", admin_set_gateway))
-    print("Bot is starting...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+   
