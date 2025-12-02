@@ -1,8 +1,0 @@
-{
-  "bot_token": "",
-  "payment_gateway": "zarinpal",
-  "zarinpal_merchant_id": "",
-  "idpay_api_key": "",
-  "nextpay_api_key": "",
-  "admin_id": "173957281"
-}
